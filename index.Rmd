@@ -17,7 +17,6 @@ output:
 
 ```{r include = FALSE}
 library(knitr)
-library(rmdformats)
 library(dplyr)
 library(ggplot2)
 library(kableExtra)
