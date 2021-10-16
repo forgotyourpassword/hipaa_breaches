@@ -51,11 +51,7 @@ breaches <- breaches %>%
          month = floor_date(date, unit = "month"))
 ```
 
-# Intro
-In just the first four months of 2019, `r NROW(breaches[str_detect(breaches$Breach.Submission.Date,'2019'),"Breach.Submission.Date"])` breaches were reported to the Office for Civil Rights. In total these breaches affected `r format(sum(breaches[str_detect(breaches$Breach.Submission.Date,'2019'),"Individuals.Affected"]), big.mark = ",")` individuals.  Even with patient privacy being a concern for many health providers the industry is falling short in protecting sensitive data. Across the US, companies are reporting incidents of theft, unauthorized access, and hacking. 
 
-# Breaches over time
-The Office for Civil Rights publishes a dataset of reported breaches going back as far as 2009.  If we graph the number of breaches reported each month over the past 9 years the trend is clear.  We can also see a few months with a high number of "Individuals Affected" around 2015 (represented by the size of the dot). The most notable being the Anthem breach reported in February 2015 which affected 78,800,000 people.
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 individuals_by_month <- breaches %>% 
    group_by(year,month) %>% 
@@ -67,8 +63,7 @@ count_by_month <- breaches %>%
 
 breaches_by_month <- merge (individuals_by_month, count_by_month)
 
-breaches_by_month %>% 
-  filter(year != 2019) %>% 
+breaches_by_month %>%
   ggplot(aes(month, count, size = total_records)) +
     geom_point(color = "purple") +
    scale_x_date(NULL, date_labels = "%Y", breaks = "year") +
@@ -78,13 +73,14 @@ breaches_by_month %>%
 ```
 
 # Types of Breaches
-The most common types of breaches are hacking, theft, and unauthorized access. Breach repors can contain multiple breach types, so some parsing had to be done in order to create a meaningful chart on this field.  The graph below shows the number of reported breaches per month distinguished by their breach type using color.  The size of the dot, similar to our previous chart, shows the relative sum of the records (i.e. individuals affected) for the breaches in the month.  
+The most common types of breaches are hacking, theft, and unauthorized access. Breach reports can contain multiple breach types, so some parsing had to be done in order to create a meaningful chart on this field.  The graph below shows the number of reported breaches per month distinguished by their breach type using color.  The size of the dot, similar to our previous chart, shows the relative sum of the records (i.e. individuals affected) for the breaches in the month.  
 
 A few things stand out in this chart. Most notably that the reporting of theft has been declining sharply and the reports of unauthorized access and hacking have been increasing. My hypothesis on why the reports of theft have dropped is that the prevalence of encrypted storage has increased.  This is a purely anecdotal observation from my experience in IT Risk over the past 10 years, but it makes sense. If a laptop is stolen but its hard drive is encrypted, OCR does not consider the data on that hard drive accessible to an unauthorized user and therefore would not constitute a reportable breach. 
 
 My other observation is that the biggest breaches (i.e. ones that affect the most individuals) are related to hacking. When you combine that with the increase in hacking incidents it paints a dire picture for individual privacy. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
 hack_by_month <- breaches %>% 
   filter(str_detect(Type.of.Breach, "Hack")) %>% 
   group_by(year,month) %>% 
@@ -102,26 +98,31 @@ access_by_month <- breaches %>%
   group_by(year,month) %>% 
   summarize(count = n(), records = sum(Individuals.Affected)) %>% 
   mutate(type = "Unauthorized Access")
-# 
-# loss_by_month <- breaches %>% 
-#   filter(str_detect(Type.of.Breach, "Loss")) %>% 
-#   group_by(year,month) %>% 
-#   summarize(count = n())%>% 
-#   mutate(type = "Loss")
-# 
-# disposal_by_month <- breaches %>% 
-#   filter(str_detect(Type.of.Breach, "Improper")) %>% 
-#   group_by(year,month) %>% 
-#   summarize(count = n()) %>% 
-#   mutate(type = "Improper Disposal")
-# 
-# other_by_month <- breaches %>% 
-#   filter(str_detect(Type.of.Breach, "Other")) %>% 
-#   group_by(year,month) %>% 
-#   summarize(count = n()) %>% 
-#   mutate(type = "Other")
 
-type_by_month <- rbind(hack_by_month,theft_by_month,access_by_month)
+loss_by_month <- breaches %>% 
+  filter(str_detect(Type.of.Breach, "Loss")) %>% 
+  group_by(year,month) %>% 
+  summarize(count = n())%>% 
+  mutate(type = "Loss")
+ 
+ disposal_by_month <- breaches %>% 
+   filter(str_detect(Type.of.Breach, "Improper")) %>% 
+   group_by(year,month) %>% 
+   summarize(count = n()) %>% 
+   mutate(type = "Improper Disposal")
+ 
+ other_by_month <- breaches %>% 
+   filter(str_detect(Type.of.Breach, "Other")) %>% 
+   group_by(year,month) %>% 
+   summarize(count = n()) %>% 
+   mutate(type = "Other")
+
+type_by_month <- rbind(hack_by_month,
+                       theft_by_month,
+                       access_by_month,
+                       loss_by_month,
+                       disposal_by_month,
+                       other_by_month)
 
 type_by_month %>% 
   ggplot(aes(month, count, color = type, size = records)) +
@@ -199,7 +200,7 @@ dfName <- breaches %>%
 head(dfName,20) %>% 
 ggplot(aes(reorder(`Entity Name`,Total),Total, fill = as.factor(Total))) +
   geom_col() +
-  guides(fill=FALSE)+
+  guides(fill="none")+
   coord_flip() +
   ylim(0,25) +
   labs(title = "Entities with the most breaches", x = "", y = "# of breaches")
